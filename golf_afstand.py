@@ -5,7 +5,7 @@ import numpy as np
 import requests
 
 st.set_page_config(page_title="Golfslag beregner", layout="centered")
-st.title("🏌️‍♂️ Golf – Slaglængde i vind og vejr")
+st.title("🏌️‍♂️ Slaglængde")
 st.caption("_Golfberegner af Anders Bøvling (2025)_")
 
 # --- API-nøgle ---
@@ -226,7 +226,7 @@ procent_modvind = round((modvind / ref_længde) * 100, 1)
 procent_medvind = round((medvind / ref_længde) * 100, 1)
 
 # --- Resultat ---
-st.markdown(f"### 🏌️ Slaglængde i dag: **{procent_neutral} %** af normal")
+st.markdown(f"### 🏌️ Slaglængde i dag: **{procent_neutral} %**")
 st.caption("(baseret på 7-jern, 150 m)")
 st.text(f"Vind: {vind} m/s fra {vindretning_str} – {temp} °C – {højde_auto} m.o.h.")
 st.text(f"Slaglængde i modvind: {procent_modvind} %")
