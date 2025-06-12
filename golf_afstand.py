@@ -4,6 +4,18 @@ import pandas as pd
 import numpy as np
 import requests
 
+from supabase import create_client
+import datetime
+
+supabase_url = st.secrets["supabase"]["url"]
+supabase_key = st.secrets["supabase"]["key"]
+supabase = create_client(supabase_url, supabase_key)
+
+def opdater_besøg():
+    supabase.table("besøg").insert({"timestamp": datetime.datetime.utcnow()}).execute()
+    count = supabase.table("besøg").select("*", count="exact").execute().count
+    return count
+
 st.set_page_config(page_title="Golfslag beregner", layout="centered")
 st.title("🏌️‍♂️ Slaglængde")
 st.caption("_Golfberegner af Anders Bøvling (2025)_")
@@ -236,3 +248,8 @@ from datetime import datetime
 nu = datetime.now().strftime("%d-%m-%Y kl. %H:%M")
 st.markdown(f"---\n*Data hentet: {nu}*")
 
+try:
+    antal = opdater_besøg()
+    st.markdown(f"👥 Antal besøg: **{antal}**")
+except Exception as e:
+    st.warning(f"Besøgs-tæller fejl: {e}")
