@@ -4,7 +4,7 @@ import numpy as np
 import requests
 
 st.title("Golf – Korrigeret Slaglængde")
-st.markdown("Denne app justerer dine slaglængder baseret på **lokalt vejr og højde**.")
+st.markdown("Denne app justerer dine slaglængder baseret på **lokalt vejr og højde** – automatisk, hvis muligt.")
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
@@ -15,37 +15,38 @@ with st.spinner("Henter din lokation..."):
         ip_info = requests.get("https://ipapi.co/json/").json()
         lat, lon = ip_info['latitude'], ip_info['longitude']
         by = ip_info.get('city', 'Ukendt')
-    except Exception as e:
-        st.error("Kunne ikke hente lokation.")
-        st.stop()
+    except Exception:
+        lat, lon = 55.0, 10.0
+        by = "Ukendt"
 
-# --- Hent vejr og højde ---
-weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}"
-elevation_url = f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}"
+# --- Forsøg at hente vejr og højde ---
+try:
+    weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}"
+    weather = requests.get(weather_url).json()
 
-with st.spinner("Henter vejrdata..."):
-    try:
-        weather = requests.get(weather_url).json()
-        elevation = requests.get(elevation_url).json()
-        
-        if "main" not in weather or "wind" not in weather:
-            st.error(f"Fejl fra vejr-API: {weather.get('message', 'Ukendt fejl')}")
-            st.stop()
+    elevation_url = f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}"
+    elevation = requests.get(elevation_url).json()
+    højde_auto = elevation["results"][0]["elevation"]
 
-        temp_auto = weather["main"]["temp"]
-        vind_auto = weather["wind"]["speed"]
-        vindvinkel_auto = weather["wind"].get("deg", 0)
-        højde_auto = elevation["results"][0]["elevation"]
+    temp_auto = weather["main"]["temp"]
+    vind_auto = weather["wind"]["speed"]
+    vindvinkel_auto = weather["wind"].get("deg", 0)
 
-    except Exception as e:
-        st.error("Kunne ikke hente vejr- eller højdeinformation.")
-        st.stop()
+    auto_data = True
+
+except Exception as e:
+    auto_data = False
+    st.warning("Automatisk vejrdata kunne ikke hentes – du kan indtaste det manuelt nedenfor.")
+    temp_auto = 20
+    vind_auto = 0
+    vindvinkel_auto = 0
+    højde_auto = "Ukendt"
 
 # --- Info ---
 st.success(f"Lokation: {by} ({round(lat, 2)}, {round(lon, 2)}) – {højde_auto} m.o.h.")
+st.markdown("### Juster data manuelt (eller behold de foreslåede)")
 
-# --- Manuel justering ---
-st.markdown("### Juster data manuelt (valgfrit)")
+# --- Input
 temp = st.slider("Temperatur (°C)", -10, 40, int(temp_auto))
 vind = st.slider("Vindstyrke (m/s)", 0, 20, int(vind_auto))
 vindvinkel = st.slider("Vindvinkel (°)", 0, 360, int(vindvinkel_auto), help="0° = medvind, 180° = modvind")
