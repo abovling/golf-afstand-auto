@@ -248,9 +248,3 @@ if regner:
 from datetime import datetime
 nu = datetime.now().strftime("%d-%m-%Y kl. %H:%M")
 st.markdown(f"---\n*Data hentet: {nu}*")
-
-try:
-    antal = opdater_besøg()
-    st.markdown(f"👥 Antal besøg: **{antal}**")
-except Exception as e:
-    st.warning(f"Besøgs-tæller fejl: {e}")
