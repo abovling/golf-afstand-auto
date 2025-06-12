@@ -11,15 +11,16 @@ WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
 # --- Klubdata inkl. St Andrews
 klubber = {
-    "Kolding Golf Club": ("6000", 55.484, 9.491),
     "Birkemose Golf Club": ("6000", 55.476, 9.537),
-    "Vejle Golf Club": ("7100", 55.707, 9.532),
+    "Langesø Golfklub": ("5462", 55.4041, 10.2215),
     "Comwell Kellers Park": ("7080", 55.355, 9.200),
     "Fredericia Golf Club": ("7000", 55.568, 9.739),
     "Golfklubben Lillebælt": ("5500", 55.507, 9.757),
     "Blommenslyst Golfklub": ("5491", 55.339, 9.292),
     "Vestfyns Golfklub": ("5620", 55.365, 9.228),
     "Faaborg Golfklub": ("5600", 55.097, 10.225),
+    "Kolding Golf Club": ("6000", 55.484, 9.491),
+    "Vejle Golf Club": ("7100", 55.707, 9.532),
     "Midtfyns Golfklub": ("5750", 55.274, 10.441),
     "The Old Course at St Andrews": ("KY16", 56.342, -2.796),
 }
