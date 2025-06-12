@@ -9,7 +9,7 @@ from supabase import create_client
 
 def opdater_besøg():
     supabase.table("besøg").insert(
-        {"timestamp": datetime.utcnow()}
+        {"timestamp": datetime.utcnow().isoformat()}
     ).execute()
 
     count = supabase.table("besøg").select("*", count="exact").execute().count
