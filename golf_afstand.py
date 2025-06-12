@@ -135,7 +135,16 @@ klubnavne = list(klubber.keys())
 
 
 
-valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klubnavne.index("Langesø Golfklub"))
+standard_klub = "Langesø Golfklub"
+if klubnavne:
+    if standard_klub in klubnavne:
+        index = klubnavne.index(standard_klub)
+    else:
+        index = 0  # vælg første klub i listen
+    valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=index)
+else:
+    valgt_klub = None
+    st.warning("Der er ingen golfklubber i det valgte område.")
 
 # --- Favoritfunktion ---
 
