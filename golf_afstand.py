@@ -37,6 +37,17 @@ baner = {
             "Kolding Golf Club": ("6000", 55.484, 9.491),
             "Vejle Golf Club": ("7100", 55.707, 9.532),
             "Fredericia Golf Club": ("7000", 55.568, 9.739),
+            "Birkemose Golf Club": ("6000", 55.462, 9.463),
+            "Jelling Golfklub": ("7300", 55.747, 9.417),
+            "Give Golfklub": ("7323", 55.847, 9.331),
+            "Hedensted Golfklub": ("8722", 55.788, 9.714),
+            "Vandel Golfklub": ("7184", 55.704, 9.186),
+            "Vejle Golfbane Øst": ("7120", 55.657, 9.576),
+            "Middelfart Golfklub": ("5500", 55.492, 9.736),
+            "Tørring Golfklub": ("7160", 55.851, 9.484),
+            "Seest Golfklub": ("6000", 55.472, 9.478),
+            "Brande Golfklub": ("7330", 55.936, 9.128),
+            "Egtved Golfklub": ("6040", 55.617, 9.421)
         },
         "Syd- og Sønderjylland": {
             "Haderslev Golfklub": ("6100", 55.259, 9.500),
@@ -81,11 +92,29 @@ def grader_til_retning(deg):
 land = st.radio("Vælg land:", list(baner.keys()), index=0)
 
 områdeliste = list(baner[land].keys())
-område = st.selectbox("Vælg område:", områdeliste)
+område = st.selectbox("Vælg område:", områdeliste, index=områdeliste.index("Fyn"))
 
 klubber = baner[land][område]
 klubnavne = list(klubber.keys())
-valgt_klub = st.selectbox("Vælg golfklub:", klubnavne)
+
+# --- Favoritfunktion ---
+if "favorit_klubber" not in st.session_state:
+    st.session_state.favorit_klubber = []
+
+# Tilføj mulighed for at markere som favorit
+if st.checkbox("⭐️ Markér som favorit", value=valgt_klub in st.session_state.favorit_klubber):
+    if valgt_klub not in st.session_state.favorit_klubber:
+        st.session_state.favorit_klubber.append(valgt_klub)
+else:
+    if valgt_klub in st.session_state.favorit_klubber:
+        st.session_state.favorit_klubber.remove(valgt_klub)
+
+# Vis favoritklubber øverst
+favoritliste = [klub for klub in klubnavne if klub in st.session_state.favorit_klubber]
+ikke_favorit = [klub for klub in klubnavne if klub not in st.session_state.favorit_klubber]
+klubnavne = favoritliste + ikke_favorit
+
+valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klubnavne.index("Langesø Golfklub"))
 
 # --- Find lokation ---
 postnr, lat, lon = klubber[valgt_klub]
@@ -129,7 +158,7 @@ def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel, hø
     return round(standard_længde * samlet_faktor * højde_faktor * regn_faktor, 1)
 
 ref_længde = køller["7-iron"]
-neutral = korrigeret_afstand(ref_længde, temp, vind, vindvinkel_auto, højde_auto, regner)
+neutral = korrigeret_afstand(ref_længde, temp, 0, 0, højde_auto, regner)
 modvind = korrigeret_afstand(ref_længde, temp, vind, 180, højde_auto, regner)
 medvind = korrigeret_afstand(ref_længde, temp, vind, 0, højde_auto, regner)
 
