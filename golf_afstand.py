@@ -6,28 +6,63 @@ import requests
 
 st.set_page_config(page_title="Golfslag beregner", layout="centered")
 st.title("🏌️‍♂️ Slaglængde")
+st.caption("_Golfberegner af Anders Bøvling (2025)_")
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
-# --- Klubdata ---
+# --- Opdaterede golfområder i Danmark ---
 baner = {
     "Danmark": {
+        "Bornholm": {
+            "Nordbornholms Golfklub": ("3770", 55.295, 14.802),
+            "Bornholms Golf Klub": ("3720", 55.085, 14.774),
+            "Nexø Golfklub": ("3730", 55.040, 15.123),
+            "Dueodde Golfbane": ("3730", 54.982, 15.096),
+        },
+        "Nordjylland": {
+            "HimmerLand Golf Club": ("9640", 56.799, 9.335),
+            "Aalborg Golf Klub": ("9000", 57.024, 9.872),
+            "Frederikshavn Golfklub": ("9900", 57.442, 10.536),
+        },
+        "Midt- og Vestjylland": {
+            "Herning Golf Klub": ("7400", 56.142, 8.972),
+            "Holstebro Golfklub": ("7500", 56.352, 8.620),
+        },
+        "Østjylland": {
+            "Silkeborg Ry Golfklub": ("8600", 56.173, 9.563),
+            "Aarhus Golf Club": ("8270", 56.097, 10.179),
+        },
         "Trekantsområdet": {
             "Kolding Golf Club": ("6000", 55.484, 9.491),
-            "Birkemose Golf Club": ("6000", 55.476, 9.537),
             "Vejle Golf Club": ("7100", 55.707, 9.532),
             "Fredericia Golf Club": ("7000", 55.568, 9.739),
-            "Comwell Kellers Park": ("7080", 55.355, 9.200),
+        },
+        "Syd- og Sønderjylland": {
+            "Haderslev Golfklub": ("6100", 55.259, 9.500),
+            "Aabenraa Golfklub": ("6200", 55.044, 9.408),
         },
         "Fyn": {
-            "Golfklubben Lillebælt": ("5500", 55.507, 9.757),
-            "Blommenslyst Golfklub": ("5491", 55.339, 9.292),
-            "Vestfyns Golfklub": ("5620", 55.365, 9.228),
-            "Faaborg Golfklub": ("5600", 55.097, 10.225),
-            "Midtfyns Golfklub": ("5750", 55.274, 10.441),
             "Langesø Golfklub": ("5462", 55.4041, 10.2215),
+            "Golfklubben Lillebælt": ("5500", 55.507, 9.757),
+            "Faaborg Golfklub": ("5600", 55.097, 10.225),
         },
+        "Sydsjælland og Møn": {
+            "Næstved Golfklub": ("4700", 55.223, 11.749),
+            "Falster Golfklub": ("4800", 54.764, 11.882),
+        },
+        "Midt- og Vestsjælland": {
+            "Kalundborg Golfklub": ("4400", 55.684, 11.099),
+            "Holbæk Golfklub": ("4300", 55.717, 11.697),
+        },
+        "Nordsjælland": {
+            "Helsingør Golf Club": ("3000", 56.018, 12.561),
+            "Rungsted Golf Klub": ("2960", 55.885, 12.533),
+        },
+        "Hovedstaden": {
+            "Københavns Golf Klub": ("2840", 55.771, 12.502),
+            "Dragør Golfklub": ("2791", 55.600, 12.663),
+        }
     },
     "Skotland": {
         "St Andrews": {
@@ -46,13 +81,11 @@ def grader_til_retning(deg):
 land = st.radio("Vælg land:", list(baner.keys()), index=0)
 
 områdeliste = list(baner[land].keys())
-område_index = områdeliste.index("Fyn") if "Fyn" in områdeliste else 0
-område = st.selectbox("Vælg område:", områdeliste, index=område_index)
+område = st.selectbox("Vælg område:", områdeliste)
 
 klubber = baner[land][område]
 klubnavne = list(klubber.keys())
-klub_index = klubnavne.index("Langesø Golfklub") if "Langesø Golfklub" in klubnavne else 0
-valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klub_index)
+valgt_klub = st.selectbox("Vælg golfklub:", klubnavne)
 
 # --- Find lokation ---
 postnr, lat, lon = klubber[valgt_klub]
@@ -90,8 +123,8 @@ def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel, hø
     temp_diff = temperatur - 20
     temp_faktor = 1 + 0.003 * temp_diff
     vind_faktor = np.cos(np.radians(vindvinkel)) * 0.01 * vindstyrke
-    højde_faktor = 1 + 0.0001 * højde  # +1 % per 100 m højde
-    regn_faktor = 0.97 if regner else 1.00  # -3 % ved regn
+    højde_faktor = 1 + 0.0001 * højde
+    regn_faktor = 0.97 if regner else 1.00
     samlet_faktor = temp_faktor + vind_faktor
     return round(standard_længde * samlet_faktor * højde_faktor * regn_faktor, 1)
 
