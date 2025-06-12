@@ -4,35 +4,39 @@ import numpy as np
 import requests
 
 st.title("Golf – Korrigeret Slaglængde")
-st.markdown("Indtast dansk **postnummer**, og få vejrbaseret slaglængdeberegning.")
-
-# --- Dansk postnummer til koordinater (udvid evt. listen senere) ---
-postnumre = {
-    "1000": (55.6761, 12.5683),   # København
-    "5800": (55.3126, 10.7842),   # Nyborg
-    "6000": (55.4691, 9.5008),    # Kolding
-    "7000": (55.4703, 9.4204),    # Fredericia
-    "8000": (56.1629, 10.2039),   # Aarhus
-    "9000": (57.0488, 9.9217),    # Aalborg
-}
+st.markdown("Vælg en golfklub og se dine slaglængder justeret for vejr og højde over havet.")
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
-# --- Input: postnummer ---
-postnummer = st.text_input("Postnummer (f.eks. 5800)", value="5800")
+# --- Klubdata: navn → (postnr, lat, lon)
+klubber = {
+    "Kolding Golf Club": ("6000", 55.484, 9.491),
+    "Birkemose Golf Club": ("6000", 55.476, 9.537),
+    "Vejle Golf Club": ("7100", 55.707, 9.532),
+    "Comwell Kellers Park": ("7080", 55.355, 9.200),
+    "Fredericia Golf Club": ("7000", 55.568, 9.739),
+    "Golfklubben Lillebælt": ("5500", 55.507, 9.757),
+    "Blommenslyst Golfklub": ("5491", 55.339, 9.292),
+    "Vestfyns Golfklub": ("5620", 55.365, 9.228),
+    "Faaborg Golfklub": ("5600", 55.097, 10.225),
+    "Midtfyns Golfklub": ("5750", 55.274, 10.441),
+}
 
-if postnummer not in postnumre:
-    st.warning("Postnummer ikke fundet i listen. Brug fallback til manuel input nedenfor.")
-    lat, lon = 55.0, 10.0
-    by = "Ukendt"
-    auto_data = False
+# --- Vælg klub via checkbox
+st.markdown("### Vælg én golfklub:")
+valgte = [navn for navn in klubber if st.checkbox(navn)]
+
+if valgte:
+    valgt_klub = valgte[0]
+    postnr, lat, lon = klubber[valgt_klub]
+    st.success(f"Valgt: {valgt_klub} ({postnr})")
 else:
-    lat, lon = postnumre[postnummer]
-    by = f"Postnummer {postnummer}"
-    auto_data = True
+    st.warning("Ingen klub valgt – standardplacering bruges.")
+    valgt_klub = "Standardplacering"
+    postnr, lat, lon = "0000", 55.0, 10.0
 
-# --- Forsøg at hente vejr og højde ---
+# --- Forsøg at hente vejr og højde
 try:
     weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}"
     weather = requests.get(weather_url).json()
@@ -44,25 +48,22 @@ try:
     temp_auto = weather["main"]["temp"]
     vind_auto = weather["wind"]["speed"]
     vindvinkel_auto = weather["wind"].get("deg", 0)
+    st.success(f"Højde: {højde_auto} m.o.h.")
 
 except Exception:
-    auto_data = False
-    st.warning("Vejrdata kunne ikke hentes – du kan indtaste det manuelt nedenfor.")
+    st.warning("Kunne ikke hente vejrdata – du kan selv vælge nedenfor.")
     temp_auto = 20
     vind_auto = 0
     vindvinkel_auto = 0
     højde_auto = "Ukendt"
 
-# --- Info ---
-st.success(f"Lokation: {by} – {højde_auto} m.o.h.")
-st.markdown("### Juster data manuelt (eller behold de foreslåede)")
-
-# --- Input
+# --- Brugervalgt justering
+st.markdown("### Juster data manuelt (valgfrit)")
 temp = st.slider("Temperatur (°C)", -10, 40, int(temp_auto))
 vind = st.slider("Vindstyrke (m/s)", 0, 20, int(vind_auto))
 vindvinkel = st.slider("Vindvinkel (°)", 0, 360, int(vindvinkel_auto), help="0° = medvind, 180° = modvind")
 
-# --- Køller og beregning ---
+# --- Kølledata og beregning
 køller = {
     "Driver": 230,
     "3-wood": 210,
@@ -80,6 +81,7 @@ def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel):
     samlet_faktor = temp_faktor + vind_faktor
     return round(standard_længde * samlet_faktor, 1)
 
+# --- Beregn resultater
 data = []
 for kølle, længde in køller.items():
     korrigeret = korrigeret_afstand(længde, temp, vind, vindvinkel)
