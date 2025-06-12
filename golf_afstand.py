@@ -4,9 +4,24 @@ import pandas as pd
 import numpy as np
 import requests
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 st.set_page_config(page_title="Golfslag beregner", layout="centered")
 st.title("🏌️‍♂️ Slaglængde")
 st.caption("_Golfberegner af Anders Bøvling (2025)_")
+
+
+def hent_og_opdater_besøg():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+    client = gspread.authorize(creds)
+    
+    sheet = client.open("GolfAfstand Tæller").sheet1
+    nuværende = int(sheet.acell("A1").value)
+    sheet.update_acell("A1", str(nuværende + 1))
+    return nuværende + 1
+
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
@@ -234,3 +249,9 @@ if regner:
 from datetime import datetime
 nu = datetime.now().strftime("%d-%m-%Y kl. %H:%M")
 st.markdown(f"---\n*Data hentet: {nu}*")
+
+try:
+    besøgstal = hent_og_opdater_besøg()
+    st.sidebar.markdown(f"👥 Antal besøg: **{besøgstal}**")
+except Exception as e:
+    st.sidebar.warning("Kan ikke hente besøgstal lige nu.")
