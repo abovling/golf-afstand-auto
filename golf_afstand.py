@@ -4,12 +4,12 @@ import numpy as np
 import requests
 
 st.title("Golf – Korrigeret Slaglængde")
-st.markdown("Vælg en golfklub og se dine slaglængder justeret for lokale vindforhold")
+st.markdown("Vælg en golfklub og få dine slaglængder justeret efter lokale vindforhold.")
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
-# --- Klubdata inkl. St Andrews ---
+# --- Klubdata inkl. St Andrews
 klubber = {
     "Kolding Golf Club": ("6000", 55.484, 9.491),
     "Birkemose Golf Club": ("6000", 55.476, 9.537),
@@ -24,58 +24,79 @@ klubber = {
     "The Old Course at St Andrews": ("KY16", 56.342, -2.796),
 }
 
-# --- Vælg én klub (radio i to kolonner) ---
-col1, col2 = st.columns(2)
-navne = list(klubber.keys())
-valgt = None
-with col1:
-    valgt = st.radio("Vælg klub:", navne[:6], index=-1)
-with col2:
-    valgt = st.radio(" ", navne[6:], index=-1, key="rad2") or valgt
+# --- Vælg golfklub via dropdown
+klubnavne = list(klubber.keys())
+valgt_klub = st.selectbox("Vælg golfklub:", ["Ingen valgt"] + klubnavne)
 
-if valgt:
-    postnr, lat, lon = klubber[valgt]
-    st.success(f"Valgt: {valgt} ({postnr})")
+if valgt_klub != "Ingen valgt":
+    postnr, lat, lon = klubber[valgt_klub]
+    st.success(f"Valgt: {valgt_klub} ({postnr})")
 else:
-    st.warning("Ingen klub valgt – manuel input for vind anvendes.")
     lat, lon = None, None
+    st.warning("Ingen golfklub valgt – vejrdata og højde deaktiveret.")
 
+# --- Konverter vindretning til verdenshjørne
 def grader_til_retning(deg):
-    ret = ["N","NØ","Ø","SØ","S","SV","V","NV"]
-    return ret[int((deg + 22.5) % 360 // 45)]
+    retninger = ["N", "NØ", "Ø", "SØ", "S", "SV", "V", "NV"]
+    idx = int((deg + 22.5) % 360 // 45)
+    return retninger[idx]
 
-# --- Hent vejr hvis klub valgt ---
-if lat:
+# --- Hent vejrdata og højde
+if lat is not None:
     try:
-        w = requests.get(f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}").json()
-        elev = requests.get(f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}").json()
-        højde = elev["results"][0]["elevation"]
-        temp_auto = w["main"]["temp"]
-        vind_auto = w["wind"]["speed"]
-        deg = w["wind"].get("deg",0)
-        ret = grader_til_retning(deg)
-        comp = f"🧭 {ret}"
-        st.info(f"Højde: {højde} m.o.h.")
-        st.info(f"Vind: {vind_auto} m/s, {deg}° {comp}")
-    except:
-        st.warning("Fejl ved vejrdata. Brug manuel input.")
-        temp_auto, vind_auto, deg, comp = 20, 0, 0, ""
-else:
-    temp_auto, vind_auto, deg, comp = 20, 0, 0, ""
+        weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}"
+        weather = requests.get(weather_url).json()
 
-# --- Brugervalgt input ---
-st.markdown("### Justér efter behov")
+        elevation_url = f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}"
+        elevation = requests.get(elevation_url).json()
+        højde_auto = elevation["results"][0]["elevation"]
+
+        temp_auto = weather["main"]["temp"]
+        vind_auto = weather["wind"]["speed"]
+        vindvinkel_auto = weather["wind"].get("deg", 0)
+        vindretning_str = grader_til_retning(vindvinkel_auto)
+
+        st.info(f"Højde: {højde_auto} m.o.h.")
+        st.info(f"Vind: {vind_auto} m/s, {vindvinkel_auto}° ({vindretning_str} 🧭)")
+
+    except:
+        st.warning("Kunne ikke hente vejrdata – brug manuel input.")
+        temp_auto, vind_auto, vindvinkel_auto, vindretning_str = 20, 0, 0, "Ukendt"
+else:
+    temp_auto, vind_auto, vindvinkel_auto, vindretning_str = 20, 0, 0, "Ukendt"
+
+# --- Manuel justering
+st.markdown("### Justér vejrdata manuelt (valgfrit)")
 temp = st.slider("Temperatur (°C)", -10, 40, int(temp_auto))
 vind = st.slider("Vindstyrke (m/s)", 0, 20, int(vind_auto))
 
-# --- Beregning ---
-def korr(stand, t, v, d):
-    tf = 1 + 0.003*(t-20)
-    vf = np.cos(np.radians(d))*0.01*v
-    return round(stand*(tf+vf),1)
+# --- Køller og beregning
+køller = {
+    "Driver": 230,
+    "3-wood": 210,
+    "5-iron": 170,
+    "7-iron": 150,
+    "9-iron": 125,
+    "PW": 110,
+    "SW": 90
+}
 
-køller = {"Driver":230,"3-wood":210,"7-iron":150}
-rows=[]
-for klub, stand in køller.items():
-    rows.append({"Kølle":klub,"Normal":stand,"Beregn":korr(stand,temp,vind,deg)})
-st.dataframe(pd.DataFrame(rows))
+def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel):
+    temp_diff = temperatur - 20
+    temp_faktor = 1 + 0.003 * temp_diff
+    vind_faktor = np.cos(np.radians(vindvinkel)) * 0.01 * vindstyrke
+    samlet_faktor = temp_faktor + vind_faktor
+    return round(standard_længde * samlet_faktor, 1)
+
+# --- Beregn
+data = []
+for kølle, længde in køller.items():
+    korrigeret = korrigeret_afstand(længde, temp, vind, vindvinkel_auto)
+    data.append({
+        "Kølle": kølle,
+        "Normal længde (m)": længde,
+        "Korrigeret længde (m)": korrigeret
+    })
+
+st.markdown("### 📊 Korrigeret Slaglængde")
+st.dataframe(pd.DataFrame(data))
