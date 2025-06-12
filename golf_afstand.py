@@ -5,13 +5,13 @@ import numpy as np
 import requests
 
 from supabase import create_client
-import datetime
+from datetime import datetime
 
 supabase_url = st.secrets["supabase"]["url"]
 supabase_key = st.secrets["supabase"]["key"]
 supabase = create_client(supabase_url, supabase_key)
 
-def opdater_besøg():
+"timestamp": datetime.utcnow()
     supabase.table("besøg").insert({"timestamp": datetime.datetime.utcnow()}).execute()
     count = supabase.table("besøg").select("*", count="exact").execute().count
     return count
