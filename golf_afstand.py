@@ -250,8 +250,10 @@ from datetime import datetime
 nu = datetime.now().strftime("%d-%m-%Y kl. %H:%M")
 st.markdown(f"---\n*Data hentet: {nu}*")
 
+st.markdown("---")  # vandret linje
+
 try:
     besøgstal = hent_og_opdater_besøg()
-    st.sidebar.markdown(f"👥 Antal besøg: **{besøgstal}**")
+    st.markdown(f"👥 Antal besøg: **{besøgstal}**")
 except Exception as e:
-    st.sidebar.warning("Kan ikke hente besøgstal lige nu.")
+    st.warning(f"Kan ikke hente besøgstal: {e}")
