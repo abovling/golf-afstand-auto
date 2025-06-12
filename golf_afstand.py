@@ -3,13 +3,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
+from datetime import datetime
+from supabase import create_client
 
 supabase_url = st.secrets["supabase"]["url"]
 supabase_key = st.secrets["supabase"]["key"]
 supabase = create_client(supabase_url, supabase_key)
-
-from datetime import datetime
-from supabase import create_client
 
 def opdater_besøg():
     supabase.table("besøg").insert(
