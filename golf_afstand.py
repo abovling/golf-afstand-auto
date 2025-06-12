@@ -230,3 +230,7 @@ st.text(f"Slaglængde i modvind: {procent_modvind} %")
 st.text(f"Slaglængde i medvind: {procent_medvind} %")
 if regner:
     st.info("Det regner – slaglængden er reduceret med 3 %.")
+
+from datetime import datetime
+nu = datetime.now().strftime("%d-%m-%Y kl. %H:%M")
+st.markdown(f"---\n*Data hentet: {nu}*")
