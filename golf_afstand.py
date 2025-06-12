@@ -70,30 +70,35 @@ try:
     vind = weather["wind"]["speed"]
     vindvinkel_auto = weather["wind"].get("deg", 0)
     vindretning_str = grader_til_retning(vindvinkel_auto)
+    regner = "rain" in weather or weather.get("weather", [{}])[0].get("main") == "Rain"
 
 except:
     st.warning("Kunne ikke hente vejrdata – standardværdier bruges.")
     temp = 20
     vind = 0
     vindvinkel_auto = 0
+    højde_auto = 0
     vindretning_str = "Ukendt"
+    regner = False
 
 # --- Beregning ---
 køller = {
     "7-iron": 150
 }
 
-def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel):
+def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel, højde, regner):
     temp_diff = temperatur - 20
     temp_faktor = 1 + 0.003 * temp_diff
     vind_faktor = np.cos(np.radians(vindvinkel)) * 0.01 * vindstyrke
+    højde_faktor = 1 + 0.0001 * højde  # +1 % per 100 m højde
+    regn_faktor = 0.97 if regner else 1.00  # -3 % ved regn
     samlet_faktor = temp_faktor + vind_faktor
-    return round(standard_længde * samlet_faktor, 1)
+    return round(standard_længde * samlet_faktor * højde_faktor * regn_faktor, 1)
 
 ref_længde = køller["7-iron"]
-neutral = korrigeret_afstand(ref_længde, temp, vind, vindvinkel_auto)
-modvind = korrigeret_afstand(ref_længde, temp, vind, 180)
-medvind = korrigeret_afstand(ref_længde, temp, vind, 0)
+neutral = korrigeret_afstand(ref_længde, temp, vind, vindvinkel_auto, højde_auto, regner)
+modvind = korrigeret_afstand(ref_længde, temp, vind, 180, højde_auto, regner)
+medvind = korrigeret_afstand(ref_længde, temp, vind, 0, højde_auto, regner)
 
 procent_neutral = round((neutral / ref_længde) * 100, 1)
 procent_modvind = round((modvind / ref_længde) * 100, 1)
@@ -102,6 +107,8 @@ procent_medvind = round((medvind / ref_længde) * 100, 1)
 # --- Resultat ---
 st.markdown(f"### 🏌️ Slaglængde i dag: **{procent_neutral} %**")
 st.caption("(baseret på 7-jern, 150 m)")
-st.text(f"Vind: {vind} m/s fra {vindretning_str}")
+st.text(f"Vind: {vind} m/s fra {vindretning_str} – {temp} °C – {højde_auto} m.o.h.")
 st.text(f"Slaglængde i modvind: {procent_modvind} %")
 st.text(f"Slaglængde i medvind: {procent_medvind} %")
+if regner:
+    st.info("Det regner – slaglængden er reduceret med 3 %.")
