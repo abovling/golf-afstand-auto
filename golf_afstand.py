@@ -38,12 +38,15 @@ baner = {
 # --- Vælg land og område
 land = st.selectbox("Vælg land:", list(baner.keys()), index=0)
 
-område = st.selectbox("Vælg område:", list(baner[land].keys()), index=0)
+områdeliste = list(baner[land].keys())
+område_index = områdeliste.index("Fyn") if "Fyn" in områdeliste else 0
+område = st.selectbox("Vælg område:", områdeliste, index=område_index)
 klubber = baner[land][område]
 klubnavne = list(klubber.keys())
 
 # --- Vælg klub
-valgt_klub = st.selectbox("Vælg golfklub:", klubnavne)
+klub_index = klubnavne.index("Langesø Golfklub") if "Langesø Golfklub" in klubnavne else 0
+valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klub_index)
 
 postnr, lat, lon = klubber[valgt_klub]
 st.success(f"Valgt: {valgt_klub} ({postnr})")
