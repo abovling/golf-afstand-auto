@@ -138,11 +138,7 @@ baner = {
     "Sydsjællands Golfklub": ("4760", 55.055, 11.997)
 },
     },
-    "Skotland": {
-        "St Andrews": {
-            "The Old Course at St Andrews": ("KY16", 56.342, -2.796)
-        }
-    }
+    
 }
 
 # --- Vindretning til verdenshjørne ---
