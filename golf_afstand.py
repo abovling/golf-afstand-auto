@@ -20,10 +20,21 @@ baner = {
             "Nexø Golfklub": ("3730", 55.040, 15.123),
             "Dueodde Golfbane": ("3730", 54.982, 15.096),
         },
-        "Nordjylland": {
-            "HimmerLand Golf Club": ("9640", 56.799, 9.335),
+         "Nordjylland": {
             "Aalborg Golf Klub": ("9000", 57.024, 9.872),
+            "HimmerLand Golf Club": ("9640", 56.799, 9.335),
             "Frederikshavn Golfklub": ("9900", 57.442, 10.536),
+            "Hjørring Golfklub": ("9800", 57.465, 9.997),
+            "Brønderslev Golfklub": ("9700", 57.271, 9.939),
+            "Sæby Golfklub": ("9300", 57.338, 10.508),
+            "Sindal Golfklub": ("9870", 57.449, 10.127),
+            "Sebber Kloster Golfklub": ("9240", 56.880, 9.405),
+            "Løgstør Golfklub": ("9670", 56.967, 9.258),
+            "Hals Golfklub": ("9370", 57.002, 10.308),
+            "Øland Golfklub": ("9460", 57.103, 9.294),
+            "Aars Golfklub": ("9600", 56.809, 9.512),
+            "Dronninglund Golfklub": ("9330", 57.176, 10.291),
+            "Lemvig Golfklub": ("7620", 56.552, 8.305)
         },
         "Midt- og Vestjylland": {
             "Herning Golf Klub": ("7400", 56.142, 8.972),
