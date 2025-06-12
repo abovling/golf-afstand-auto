@@ -61,7 +61,19 @@ except Exception:
 st.markdown("### Juster data manuelt (valgfrit)")
 temp = st.slider("Temperatur (°C)", -10, 40, int(temp_auto))
 vind = st.slider("Vindstyrke (m/s)", 0, 20, int(vind_auto))
-vindvinkel = st.slider("Vindvinkel (°)", 0, 360, int(vindvinkel_auto), help="0° = medvind, 180° = modvind")
+retninger = {
+    "S (medvind)": 0,
+    "SØ": 315,
+    "Ø": 270,
+    "NØ": 225,
+    "N (modvind)": 180,
+    "NV": 135,
+    "V": 90,
+    "SV": 45,
+}
+
+valgt_retning = st.selectbox("Vindretning (hvor vinden kommer fra)", list(retninger.keys()))
+vindvinkel = retninger[valgt_retning]
 
 # --- Kølledata og beregning
 køller = {
