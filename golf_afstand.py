@@ -1,15 +1,16 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
 
-st.title("Golf – Korrigeret Slaglængde")
-st.markdown("Vælg land, område og golfklub – få slaglængder justeret efter lokale vindforhold.")
+st.set_page_config(page_title="Golfslag beregner", layout="centered")
+st.title("🏌️‍♂️ Golf – Slaglængde i vind og vejr")
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
-# --- Klubdata
+# --- Klubdata ---
 baner = {
     "Danmark": {
         "Trekantsområdet": {
@@ -26,7 +27,7 @@ baner = {
             "Faaborg Golfklub": ("5600", 55.097, 10.225),
             "Midtfyns Golfklub": ("5750", 55.274, 10.441),
             "Langesø Golfklub": ("5462", 55.4041, 10.2215),
-        }
+        },
     },
     "Skotland": {
         "St Andrews": {
@@ -35,29 +36,28 @@ baner = {
     }
 }
 
-# --- Vælg land og område
-land = st.selectbox("Vælg land:", list(baner.keys()), index=0)
-
-områdeliste = list(baner[land].keys())
-område_index = områdeliste.index("Fyn") if "Fyn" in områdeliste else 0
-område = st.selectbox("Vælg område:", områdeliste, index=område_index)
-klubber = baner[land][område]
-klubnavne = list(klubber.keys())
-
-# --- Vælg klub
-klub_index = klubnavne.index("Langesø Golfklub") if "Langesø Golfklub" in klubnavne else 0
-valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klub_index)
-
-postnr, lat, lon = klubber[valgt_klub]
-st.success(f"Valgt: {valgt_klub} ({postnr})")
-
-# --- Vindretning til verdenshjørne
+# --- Vindretning til verdenshjørne ---
 def grader_til_retning(deg):
     retninger = ["N", "NØ", "Ø", "SØ", "S", "SV", "V", "NV"]
     idx = int((deg + 22.5) % 360 // 45)
     return retninger[idx]
 
-# --- Hent vejr og højde
+# --- Brugervalg ---
+land = st.radio("Vælg land:", list(baner.keys()), index=0)
+
+områdeliste = list(baner[land].keys())
+område_index = områdeliste.index("Fyn") if "Fyn" in områdeliste else 0
+område = st.selectbox("Vælg område:", områdeliste, index=område_index)
+
+klubber = baner[land][område]
+klubnavne = list(klubber.keys())
+klub_index = klubnavne.index("Langesø Golfklub") if "Langesø Golfklub" in klubnavne else 0
+valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klub_index)
+
+# --- Find lokation ---
+postnr, lat, lon = klubber[valgt_klub]
+
+# --- Hent vejr og højde ---
 try:
     weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}"
     weather = requests.get(weather_url).json()
@@ -66,32 +66,21 @@ try:
     elevation = requests.get(elevation_url).json()
     højde_auto = elevation["results"][0]["elevation"]
 
-    temp_auto = weather["main"]["temp"]
-    vind_auto = weather["wind"]["speed"]
+    temp = weather["main"]["temp"]
+    vind = weather["wind"]["speed"]
     vindvinkel_auto = weather["wind"].get("deg", 0)
     vindretning_str = grader_til_retning(vindvinkel_auto)
 
-    st.info(f"Højde: {højde_auto} m.o.h.")
-    st.info(f"Vind: {vind_auto} m/s, {vindvinkel_auto}° ({vindretning_str} 🧭)")
-
 except:
-    st.warning("Kunne ikke hente vejrdata – brug manuel input.")
-    temp_auto, vind_auto, vindvinkel_auto, vindretning_str = 20, 0, 0, "Ukendt"
+    st.warning("Kunne ikke hente vejrdata – standardværdier bruges.")
+    temp = 20
+    vind = 0
+    vindvinkel_auto = 0
+    vindretning_str = "Ukendt"
 
-# --- Manuel justering
-st.markdown("### Justér vejrdata manuelt (valgfrit)")
-temp = st.slider("Temperatur (°C)", -10, 40, int(temp_auto))
-vind = st.slider("Vindstyrke (m/s)", 0, 20, int(vind_auto))
-
-# --- Køller og beregning
+# --- Beregning ---
 køller = {
-    "Driver": 230,
-    "3-wood": 210,
-    "5-iron": 170,
-    "7-iron": 150,
-    "9-iron": 125,
-    "PW": 110,
-    "SW": 90
+    "7-iron": 150
 }
 
 def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel):
@@ -101,15 +90,18 @@ def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel):
     samlet_faktor = temp_faktor + vind_faktor
     return round(standard_længde * samlet_faktor, 1)
 
-# --- Beregn og vis
-data = []
-for kølle, længde in køller.items():
-    korrigeret = korrigeret_afstand(længde, temp, vind, vindvinkel_auto)
-    data.append({
-        "Kølle": kølle,
-        "Normal længde (m)": længde,
-        "Korrigeret længde (m)": korrigeret
-    })
+ref_længde = køller["7-iron"]
+neutral = korrigeret_afstand(ref_længde, temp, vind, vindvinkel_auto)
+modvind = korrigeret_afstand(ref_længde, temp, vind, 180)
+medvind = korrigeret_afstand(ref_længde, temp, vind, 0)
 
-st.markdown("### 📊 Korrigeret Slaglængde")
-st.dataframe(pd.DataFrame(data))
+procent_neutral = round((neutral / ref_længde) * 100, 1)
+procent_modvind = round((modvind / ref_længde) * 100, 1)
+procent_medvind = round((medvind / ref_længde) * 100, 1)
+
+# --- Resultat ---
+st.markdown(f"### 🏌️ Slaglængde i dag: **{procent_neutral} %** af normal")
+st.caption("(baseret på 7-jern, 150 m)")
+st.text(f"Vind: {vind} m/s fra {vindretning_str}")
+st.text(f"Slaglængde i modvind: {procent_modvind} %")
+st.text(f"Slaglængde i medvind: {procent_medvind} %")
