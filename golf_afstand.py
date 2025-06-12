@@ -5,7 +5,7 @@ import numpy as np
 import requests
 
 st.set_page_config(page_title="Golfslag beregner", layout="centered")
-st.title("🏌️‍♂️ Slaglængde")
+st.title("🏌️‍♂️ Golf – Slaglængde i vind og vejr")
 st.caption("_Golfberegner af Anders Bøvling (2025)_")
 
 # --- API-nøgle ---
@@ -97,11 +97,14 @@ område = st.selectbox("Vælg område:", områdeliste, index=områdeliste.index(
 klubber = baner[land][område]
 klubnavne = list(klubber.keys())
 
+
+
+valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klubnavne.index("Langesø Golfklub"))
+
 # --- Favoritfunktion ---
 if "favorit_klubber" not in st.session_state:
     st.session_state.favorit_klubber = []
 
-# Tilføj mulighed for at markere som favorit
 if st.checkbox("⭐️ Markér som favorit", value=valgt_klub in st.session_state.favorit_klubber):
     if valgt_klub not in st.session_state.favorit_klubber:
         st.session_state.favorit_klubber.append(valgt_klub)
@@ -114,7 +117,6 @@ favoritliste = [klub for klub in klubnavne if klub in st.session_state.favorit_k
 ikke_favorit = [klub for klub in klubnavne if klub not in st.session_state.favorit_klubber]
 klubnavne = favoritliste + ikke_favorit
 
-valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klubnavne.index("Langesø Golfklub"))
 
 # --- Find lokation ---
 postnr, lat, lon = klubber[valgt_klub]
@@ -167,7 +169,7 @@ procent_modvind = round((modvind / ref_længde) * 100, 1)
 procent_medvind = round((medvind / ref_længde) * 100, 1)
 
 # --- Resultat ---
-st.markdown(f"### 🏌️ Slaglængde i dag: **{procent_neutral} %**")
+st.markdown(f"### 🏌️ Slaglængde i dag: **{procent_neutral} %** af normal")
 st.caption("(baseret på 7-jern, 150 m)")
 st.text(f"Vind: {vind} m/s fra {vindretning_str} – {temp} °C – {højde_auto} m.o.h.")
 st.text(f"Slaglængde i modvind: {procent_modvind} %")
