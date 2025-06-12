@@ -4,41 +4,53 @@ import numpy as np
 import requests
 
 st.title("Golf – Korrigeret Slaglængde")
-
 st.markdown("Denne app justerer dine slaglængder baseret på **lokalt vejr og højde**.")
 
-# --- API-indstillinger ---
-WEATHER_API_KEY = "ab123184d6aa2b73b4114f9045ec3126"
+# --- API-nøgle ---
+WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
-# --- Få brugerens lokation via IP ---
+# --- Lokation via IP ---
 with st.spinner("Henter din lokation..."):
-    ip_info = requests.get("https://ipapi.co/json/").json()
-    lat, lon = ip_info['latitude'], ip_info['longitude']
-    by = ip_info['city']
+    try:
+        ip_info = requests.get("https://ipapi.co/json/").json()
+        lat, lon = ip_info['latitude'], ip_info['longitude']
+        by = ip_info.get('city', 'Ukendt')
+    except Exception as e:
+        st.error("Kunne ikke hente lokation.")
+        st.stop()
 
-# --- Hent vejrdata og elevation ---
+# --- Hent vejr og højde ---
 weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={WEATHER_API_KEY}"
 elevation_url = f"https://api.open-elevation.com/api/v1/lookup?locations={lat},{lon}"
 
 with st.spinner("Henter vejrdata..."):
-    weather = requests.get(weather_url).json()
-    elevation = requests.get(elevation_url).json()
+    try:
+        weather = requests.get(weather_url).json()
+        elevation = requests.get(elevation_url).json()
+        
+        if "main" not in weather or "wind" not in weather:
+            st.error(f"Fejl fra vejr-API: {weather.get('message', 'Ukendt fejl')}")
+            st.stop()
 
-# --- Udtræk værdier ---
-temp_auto = weather["main"]["temp"]
-vind_auto = weather["wind"]["speed"]
-vindvinkel_auto = weather["wind"]["deg"]
-højde_auto = elevation["results"][0]["elevation"]
+        temp_auto = weather["main"]["temp"]
+        vind_auto = weather["wind"]["speed"]
+        vindvinkel_auto = weather["wind"].get("deg", 0)
+        højde_auto = elevation["results"][0]["elevation"]
 
+    except Exception as e:
+        st.error("Kunne ikke hente vejr- eller højdeinformation.")
+        st.stop()
+
+# --- Info ---
 st.success(f"Lokation: {by} ({round(lat, 2)}, {round(lon, 2)}) – {højde_auto} m.o.h.")
 
-# --- Brugere kan justere værdier hvis ønsket ---
+# --- Manuel justering ---
 st.markdown("### Juster data manuelt (valgfrit)")
 temp = st.slider("Temperatur (°C)", -10, 40, int(temp_auto))
 vind = st.slider("Vindstyrke (m/s)", 0, 20, int(vind_auto))
 vindvinkel = st.slider("Vindvinkel (°)", 0, 360, int(vindvinkel_auto), help="0° = medvind, 180° = modvind")
 
-# --- Kølledata og beregning ---
+# --- Køller og beregning ---
 køller = {
     "Driver": 230,
     "3-wood": 210,
@@ -56,7 +68,6 @@ def korrigeret_afstand(standard_længde, temperatur, vindstyrke, vindvinkel):
     samlet_faktor = temp_faktor + vind_faktor
     return round(standard_længde * samlet_faktor, 1)
 
-# --- Beregning ---
 data = []
 for kølle, længde in køller.items():
     korrigeret = korrigeret_afstand(længde, temp, vind, vindvinkel)
