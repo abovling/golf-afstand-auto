@@ -5,6 +5,7 @@ import numpy as np
 import requests
 
 from datetime import datetime
+from supabase import create_client
 
 def opdater_besøg():
     supabase.table("besøg").insert(
