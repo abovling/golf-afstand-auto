@@ -53,7 +53,7 @@ baner = {
             "Brande Golfklub": ("7330", 55.936, 9.128)
         },
         "Østjylland": {
-            "Lübker Golf Resort": ("8581", 56.415, 10.695)
+            "Lübker Golf Resort": ("8581", 56.415, 10.695),
             "Silkeborg Ry Golfklub": ("8600", 56.173, 9.563),
             "Aarhus Golf Club": ("8270", 56.097, 10.179),
             "Odder Golfklub": ("8300", 55.973, 10.125),
