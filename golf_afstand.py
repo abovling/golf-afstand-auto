@@ -4,17 +4,19 @@ import pandas as pd
 import numpy as np
 import requests
 
-from supabase import create_client
 from datetime import datetime
+
+def opdater_besøg():
+    supabase.table("besøg").insert(
+        {"timestamp": datetime.utcnow()}
+    ).execute()
+
+    count = supabase.table("besøg").select("*", count="exact").execute().count
+    return count
 
 supabase_url = st.secrets["supabase"]["url"]
 supabase_key = st.secrets["supabase"]["key"]
 supabase = create_client(supabase_url, supabase_key)
-
-"timestamp": datetime.utcnow()
-    supabase.table("besøg").insert({"timestamp": datetime.datetime.utcnow()}).execute()
-    count = supabase.table("besøg").select("*", count="exact").execute().count
-    return count
 
 st.set_page_config(page_title="Golfslag beregner", layout="centered")
 st.title("🏌️‍♂️ Slaglængde")
