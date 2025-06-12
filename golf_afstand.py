@@ -4,20 +4,33 @@ import numpy as np
 import requests
 
 st.title("Golf – Korrigeret Slaglængde")
-st.markdown("Denne app justerer dine slaglængder baseret på **lokalt vejr og højde** – automatisk, hvis muligt.")
+st.markdown("Indtast dansk **postnummer**, og få vejrbaseret slaglængdeberegning.")
+
+# --- Dansk postnummer til koordinater (udvid evt. listen senere) ---
+postnumre = {
+    "1000": (55.6761, 12.5683),   # København
+    "5800": (55.3126, 10.7842),   # Nyborg
+    "6000": (55.4691, 9.5008),    # Kolding
+    "7000": (55.4703, 9.4204),    # Fredericia
+    "8000": (56.1629, 10.2039),   # Aarhus
+    "9000": (57.0488, 9.9217),    # Aalborg
+}
 
 # --- API-nøgle ---
 WEATHER_API_KEY = "76a93862c3136e24c75df4db4cb236a4"
 
-# --- Lokation via IP ---
-with st.spinner("Henter din lokation..."):
-    try:
-        ip_info = requests.get("https://ipapi.co/json/").json()
-        lat, lon = ip_info['latitude'], ip_info['longitude']
-        by = ip_info.get('city', 'Ukendt')
-    except Exception:
-        lat, lon = 55.0, 10.0
-        by = "Ukendt"
+# --- Input: postnummer ---
+postnummer = st.text_input("Postnummer (f.eks. 5800)", value="5800")
+
+if postnummer not in postnumre:
+    st.warning("Postnummer ikke fundet i listen. Brug fallback til manuel input nedenfor.")
+    lat, lon = 55.0, 10.0
+    by = "Ukendt"
+    auto_data = False
+else:
+    lat, lon = postnumre[postnummer]
+    by = f"Postnummer {postnummer}"
+    auto_data = True
 
 # --- Forsøg at hente vejr og højde ---
 try:
@@ -32,18 +45,16 @@ try:
     vind_auto = weather["wind"]["speed"]
     vindvinkel_auto = weather["wind"].get("deg", 0)
 
-    auto_data = True
-
-except Exception as e:
+except Exception:
     auto_data = False
-    st.warning("Automatisk vejrdata kunne ikke hentes – du kan indtaste det manuelt nedenfor.")
+    st.warning("Vejrdata kunne ikke hentes – du kan indtaste det manuelt nedenfor.")
     temp_auto = 20
     vind_auto = 0
     vindvinkel_auto = 0
     højde_auto = "Ukendt"
 
 # --- Info ---
-st.success(f"Lokation: {by} ({round(lat, 2)}, {round(lon, 2)}) – {højde_auto} m.o.h.")
+st.success(f"Lokation: {by} – {højde_auto} m.o.h.")
 st.markdown("### Juster data manuelt (eller behold de foreslåede)")
 
 # --- Input
