@@ -102,21 +102,6 @@ klubnavne = list(klubber.keys())
 valgt_klub = st.selectbox("Vælg golfklub:", klubnavne, index=klubnavne.index("Langesø Golfklub"))
 
 # --- Favoritfunktion ---
-if "favorit_klubber" not in st.session_state:
-    st.session_state.favorit_klubber = []
-
-if st.checkbox("⭐️ Markér som favorit", value=valgt_klub in st.session_state.favorit_klubber):
-    if valgt_klub not in st.session_state.favorit_klubber:
-        st.session_state.favorit_klubber.append(valgt_klub)
-else:
-    if valgt_klub in st.session_state.favorit_klubber:
-        st.session_state.favorit_klubber.remove(valgt_klub)
-
-# Vis favoritklubber øverst
-favoritliste = [klub for klub in klubnavne if klub in st.session_state.favorit_klubber]
-ikke_favorit = [klub for klub in klubnavne if klub not in st.session_state.favorit_klubber]
-klubnavne = favoritliste + ikke_favorit
-
 
 # --- Find lokation ---
 postnr, lat, lon = klubber[valgt_klub]
